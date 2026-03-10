@@ -1,3 +1,13 @@
+// --- CONFIGURAZIONE E VARIABILI INIZIALI ---
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCoWoMUL4SwIoc8zvYTgt32ge01SvD14X5cHyZQsXVb48bUM5OpOaRWHQmZSe5BqJiUw/exec";
+
+// 1. Gestione Nickname
+let userNickname = localStorage.getItem('vibeSlot_nick');
+if (!userNickname || userNickname === "null") {
+    userNickname = prompt("Benvenuto! Inserisci il tuo Nickname:") || "Player" + Math.floor(Math.random() * 1000);
+    localStorage.setItem('vibeSlot_nick', userNickname);
+}
+
 const baseSymbolData = { '💎': 1000, '🔥': 500, '⭐': 300, '⚡': 150, '🌈': 100, '🔮': 50 };
 const gridSymbolData = { '💎': 2000, '🔥': 1000, '⭐': 600, '⚡': 300, '🌈': 150, '🔮': 80 };
 const symbols = Object.keys(baseSymbolData);
@@ -8,9 +18,10 @@ let currentMultiplier = 1;
 let gridCells = [];
 let history = [];
 
-// Funzione centrale per aggiornare il credito con separatore
+// --- FUNZIONI DI INTERFACCIA ---
 function updateScoreUI() {
-    document.getElementById('currentScore').innerText = `$ ${score.toLocaleString('it-IT')}`;
+    const scoreEl = document.getElementById('currentScore');
+    if (scoreEl) scoreEl.innerText = `$ ${score.toLocaleString('it-IT')}`;
 }
 
 function showPage(id) {
@@ -83,9 +94,14 @@ function addHistory(amount) {
     `).join('');
 }
 
+// --- LOGICA DEL GIOCO ---
 function spin() {
     const cost = (currentMode === '3x3' ? 30 : 10) * currentMultiplier;
     if (score < cost) return;
+    
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) saveBtn.style.display = 'block';
+
     score -= cost;
     updateScoreUI();
     
@@ -135,7 +151,6 @@ function calculateResult() {
         if (vals[0] === vals[1] && vals[1] === vals[2]) {
             totalWin += (data[vals[0]] * currentMultiplier);
             line.forEach(c => c.classList.add('winner'));
-            if(currentMode === '3x3') drawWinLine(line);
             trisCount++;
         } else if (currentMode === '1x3') {
             if (vals[0] === vals[1] || vals[1] === vals[2] || vals[0] === vals[2]) {
@@ -149,81 +164,27 @@ function calculateResult() {
     });
 
     score += totalWin;
-    updateUI();
+    updateScoreUI();
     addHistory(totalWin);
     
     const msg = document.getElementById('message');
-    const stats = document.getElementById('stats');
-
     if (totalWin > 0) {
         mainFrame.classList.add('shake-anim');
         setTimeout(() => mainFrame.classList.remove('shake-anim'), 300);
-
-        // --- EFFETTO PIOGGIA DI SOLDI ---
-        // Se vinci 500 o più, parte la pioggia!
-        if (totalWin >= 500) {
-            createMoneyRain();
-        }
-
+        if (totalWin >= 500) createMoneyRain();
         msg.innerText = `VINTI: +$${totalWin.toLocaleString('it-IT')}!`;
-        msg.style.color = trisCount >= 2 ? "#ff00ff" : "var(--accent)";
-        
-        let ratio = currentMode === '3x3' ? (trisCount >= 2 ? "1 su 750" : "1 su 27") : (trisCount === 1 ? "1 su 216" : "1 su 7");
-        let perc = currentMode === '3x3' ? (trisCount >= 2 ? "0.13%" : "3.7%") : (trisCount === 1 ? "0.46%" : "14.3%");
-        stats.innerHTML = `<span>${ratio}</span><br><span style="font-size:0.7rem; opacity:0.6">Probabilità: ${perc}</span>`;
     } else {
         msg.innerText = "RIPROVA";
-        msg.style.color = "#444";
-        stats.innerHTML = `<span style="opacity:0.4">${currentMode === '1x3' ? "85.7% di prob. vuoto" : "96.3% di prob. vuoto"}</span>`;
     }
-    document.getElementById('spinBtn').disabled = false;
-}
-
-window.addEventListener('keydown', (e) => { 
-    if(e.code === 'Space') { e.preventDefault(); if(!document.getElementById('spinBtn').disabled) spin(); }
-});
-
-window.onload = () => { createCells(3); updateScoreUI(); updateSpinButtonText(); };
-function createMoneyRain() {
-    const symbols = ['💸', '💰', '💎', '💵'];
-    const count = 40; // Quanti oggetti far cadere
-
-    for (let i = 0; i < count; i++) {
-        setTimeout(() => {
-            const el = document.createElement('div');
-            el.className = 'money-rain';
-            el.innerText = symbols[Math.floor(Math.random() * symbols.length)];
-            
-            // Posizione orizzontale casuale
-            el.style.left = Math.random() * 100 + 'vw';
-            // Durata della caduta casuale (tra 2 e 4 secondi)
-            el.style.animationDuration = (Math.random() * 2 + 2) + 's';
-            // Dimensione casuale
-            el.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
-            
-            document.body.appendChild(el);
-
-            // Rimuovi l'elemento dopo l'animazione per non pesare sulla memoria
-            setTimeout(() => {
-                el.remove();
-            }, 4000);
-        }, i * 50); // Li fa cadere uno dopo l'altro (effetto cascata)
+    
+    if (document.getElementById('saveBtn').innerText !== "PUNTEGGIO INVIATO ✅") {
+        document.getElementById('spinBtn').disabled = false;
     }
 }
-const GOOGLE_SCRIPT_URL = Ihttps://script.google.com/macros/s/AKfycbx9yI3_GR8HZfQluDZX8kNEtJN_Qhdnr60FcCGjrtlQvB5KHT0DW9PM2Rj67YKp7H1EPA/exec";
-// 2. GESTIONE NICKNAME (Aggiungi questa parte se manca)
-let userNickname = localStorage.getItem('vibeSlot_nick');
-if (!userNickname) {
-    userNickname = prompt("Inserisci il tuo Nickname per la classifica globale:") || "Player" + Math.floor(Math.random() * 1000);
-    localStorage.setItem('vibeSlot_nick', userNickname);
-}
-// Mostra il tasto di salvataggio solo dopo il primo spin
-function mostraTastoSalva() {
-    document.getElementById('saveBtn').style.display = 'block';
-}
 
+// --- CLASSIFICA ---
 async function inviaPunteggio() {
-    if(!confirm("Vuoi chiudere la sessione e inviare $" + score + " in classifica?")) return;
+    if(!confirm("Vuoi inviare $" + score + " in classifica?")) return;
 
     const payload = {
         nome: userNickname,
@@ -231,22 +192,49 @@ async function inviaPunteggio() {
         modo: currentMode
     };
 
-    // Disabilita tutto per evitare doppie inviate o giocate extra
-    document.getElementById('spinBtn').disabled = true;
     document.getElementById('saveBtn').disabled = true;
-    document.getElementById('saveBtn').innerText = "INVIO IN CORSO...";
+    document.getElementById('saveBtn').innerText = "INVIO...";
 
     try {
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Necessario per Google Script
+            mode: 'no-cors',
             body: JSON.stringify(payload)
         });
         
-        alert("Punteggio registrato! Grazie per aver giocato.");
+        alert("Punteggio inviato!");
         document.getElementById('saveBtn').innerText = "PUNTEGGIO INVIATO ✅";
     } catch (e) {
-        alert("Errore nell'invio. Riprova!");
+        alert("Errore invio!");
         document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').innerText = "🏆 INVIA PUNTEGGIO";
     }
 }
+
+function createMoneyRain() {
+    const rainSymbols = ['💸', '💰', '💎', '💵'];
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'money-rain';
+            el.innerText = rainSymbols[Math.floor(Math.random() * rainSymbols.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }, i * 100);
+    }
+}
+
+// --- EVENTI ---
+window.addEventListener('keydown', (e) => { 
+    if(e.code === 'Space') { 
+        e.preventDefault(); 
+        if(!document.getElementById('spinBtn').disabled) spin(); 
+    }
+});
+
+window.onload = () => { 
+    createCells(3); 
+    updateScoreUI(); 
+    updateSpinButtonText(); 
+};
