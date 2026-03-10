@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Slot - Fixed Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="gamePage" class="page active">
+        <div class="game-title">Vib€ $lot</div>
+        <div class="mode-selector">
+            <button id="btn1x3" class="mode-btn active" onclick="setMode('1x3')">CLASSIC 1x3</button>
+            <button id="btn3x3" class="mode-btn" onclick="setMode('3x3')">GRID 3x3</button>
+        </div>
+        <div class="wallet-container">
+            <div id="currentScore">$ 150</div>
+        </div>
+        <div class="main-frame" id="mainFrame">
+            <div class="grid-wrapper">
+                <div id="slotGrid" class="slot-grid grid-1x3"></div>
+                <canvas id="winCanvas"></canvas>
+            </div>
+            
+            <button id="spinBtn" onclick="spin()">SPIN (-$10)</button>
+            <button id="saveBtn" onclick="inviaPunteggio()" style="background:#ff00ff; color:white; margin-top:10px; border-radius:50px; padding:10px; width:100%; border:none; cursor:pointer; font-weight:bold; display:none;">
+    🏆 INVIA PUNTEGGIO E CHIUDI
+</button>
+
+            <div style="margin-top: 20px; display: flex; gap: 8px;">
+                <button class="bet-btn active" onclick="setMultiplier(1)">1x</button>
+                <button class="bet-btn" onclick="setMultiplier(2)">2x</button>
+                <button class="bet-btn" onclick="setMultiplier(3)">3x</button>
+                <button class="bet-btn" onclick="setMultiplier(5)">5x</button>
+            </div>
+
+            <div class="status-area">
+                <div id="message"></div>
+                <div id="stats"></div>
+            </div>
+
+            <div class="history-container">
+                <div class="history-title">Ultime Vincite</div>
+                <div id="historyList"></div>
+            </div>
+
+            <div class="info-link" onclick="showPage('infoPage')">TABELLA PREMI</div>
+        </div>
+    </div>
+
+    <div id="infoPage" class="page">
+        <h2 id="legendTitle" style="color:var(--accent); text-transform: uppercase;">Premi</h2>
+        <div id="legendContent" style="background:var(--panel); padding:25px; border-radius:25px; width:100%; max-width:400px;"></div>
+        <button onclick="showPage('gamePage')" style="margin-top:30px; background:none; border:1px solid white; color:white; padding:10px 30px; border-radius:20px; cursor:pointer;">INDIETRO</button>
+    </div>
+
+    <div class="responsible-footer">
+        Il gioco è vietato ai minori e può causare dipendenza patologica. 
+        <br>
+        Gioca <strong>responsabilmente</strong>.
+    </div>
+
+<script>
+    const baseSymbolData = { '💎': 1000, '🔥': 500, '⭐': 300, '⚡': 150, '🌈': 100, '🔮': 50 };
+    const gridSymbolData = { '💎': 2000, '🔥': 1000, '⭐': 600, '⚡': 300, '🌈': 150, '🔮': 80 };
+    const symbols = Object.keys(baseSymbolData);
+    
+    let score = 150;
+    let currentMode = '1x3';
+    let currentMultiplier = 1;
+    let gridCells = [];
+    let history = [];
+
+    function updateUI() {
+        document.getElementById('currentScore').innerText = `$ ${score.toLocaleString('it-IT')}`;
+    }
+
+    // --- FUNZIONE PIOGGIA DI SOLDI ---
+    function createMoneyRain() {
+        const rainIcons = ['💸', '💰', '💎', '💵'];
+        const count = 40; 
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'money-rain'; // Usa la classe nel tuo CSS esterno
+                el.innerText = rainIcons[Math.floor(Math.random() * rainIcons.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                el.style.fontSize = (Math.random() * 1.5 + 1) + 'rem';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4000);
+            }, i * 60);
+        }
+    }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'infoPage') updateLegend();
+    }
+
+    function updateLegend() {
+        const cont = document.getElementById('legendContent'); 
+        const title = document.getElementById('legendTitle');
+        if(!cont) return;
+        cont.innerHTML = '';
+        const data = currentMode === '1x3' ? baseSymbolData : gridSymbolData;
+        title.innerText = "Tabella Premi";
+
+        let tableHTML = `<table style="width:100%; border-collapse: collapse; font-family: monospace; text-align: center; font-size: 0.9rem;">
+            <thead><tr style="border-bottom: 2px solid var(--accent); color: var(--accent);">
+                <th style="padding: 10px;">TRIS</th><th style="padding: 10px;">1x</th><th style="padding: 10px;">2x</th><th style="padding: 10px;">3x</th><th style="padding: 10px;">5x</th>
+            </tr></thead><tbody>`;
+
+        for(let s in data) {
+            const baseVal = data[s];
+            tableHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <td style="padding: 12px; font-size: 1.2rem;">${s}${s}${s}</td>
+                <td>$${(baseVal).toLocaleString('it-IT')}</td>
+                <td>$${(baseVal*2).toLocaleString('it-IT')}</td>
+                <td>$${(baseVal*3).toLocaleString('it-IT')}</td>
+                <td>$${(baseVal*5).toLocaleString('it-IT')}</td>
+            </tr>`;
+        }
+        tableHTML += `</tbody></table>`;
+        cont.innerHTML = tableHTML;
+    }
+
+    function addHistory(amount) {
+        if (amount <= 0) return;
+        const time = new Date().toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
+        history.unshift({ time, amount });
+        if(history.length > 5) history.pop();
+        
+        document.getElementById('historyList').innerHTML = history.map(h => `
+            <div class="history-item win">
+                <span>${h.time}</span>
+                <span>+$${h.amount.toLocaleString('it-IT')}</span>
+            </div>
+        `).join('');
+    }
+
+    function setMultiplier(m) {
+        if(document.getElementById('spinBtn').disabled) return;
+        currentMultiplier = m;
+        document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === m + 'x'));
+        updateSpinButtonText();
+    }
+
+    function updateSpinButtonText() {
+        const basePrice = currentMode === '3x3' ? 30 : 10;
+        document.getElementById('spinBtn').innerText = `SPIN (-$${(basePrice * currentMultiplier).toLocaleString('it-IT')})`;
+    }
+
+    function setMode(mode) {
+        if(document.getElementById('spinBtn').disabled) return;
+        currentMode = mode;
+        score = (mode === '1x3') ? 150 : 300;
+        updateUI();
+        clearLines();
+        document.getElementById('btn1x3').classList.toggle('active', mode === '1x3');
+        document.getElementById('btn3x3').classList.toggle('active', mode === '3x3');
+        const grid = document.getElementById('slotGrid');
+        grid.className = `slot-grid ${mode === '1x3' ? 'grid-1x3' : 'grid-3x3'}`;
+        createCells(mode === '1x3' ? 3 : 9);
+        updateSpinButtonText(); 
+    }
+
+    function createCells(count) {
+        const grid = document.getElementById('slotGrid');
+        grid.innerHTML = ''; gridCells = [];
+        for(let i=0; i<count; i++) {
+            const div = document.createElement('div');
+            div.className = 'reel'; div.innerText = '🔮';
+            grid.appendChild(div); gridCells.push(div);
+        }
+        setTimeout(resizeCanvas, 50);
+    }
+
+    function resizeCanvas() {
+        const canvas = document.getElementById('winCanvas');
+        const grid = document.getElementById('slotGrid');
+        if(!canvas || !grid) return;
+        canvas.width = grid.offsetWidth;
+        canvas.height = grid.offsetHeight;
+    }
+
+    function clearLines() {
+        const canvas = document.getElementById('winCanvas');
+        if(!canvas) return;
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawWinLine(cells) {
+        if (currentMode !== '3x3') return;
+        const canvas = document.getElementById('winCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridRect = document.getElementById('slotGrid').getBoundingClientRect();
+        ctx.beginPath();
+        cells.forEach((cell, index) => {
+            const rect = cell.getBoundingClientRect();
+            const x = (rect.left + rect.width / 2) - gridRect.left;
+            const y = (rect.top + rect.height / 2) - gridRect.top;
+            if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.lineWidth = 6; ctx.strokeStyle = '#00ffcc'; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+ function spin() {
+    const cost = (currentMode === '3x3' ? 30 : 10) * currentMultiplier;
+    if (score < cost) return;
+    
+    // 1. Mostra il tasto per inviare il punteggio al primo spin
+    if (typeof mostraTastoSalva === "function") mostraTastoSalva();
+    
+    score -= cost;
+    
+    // 2. Assicurati che il nome della funzione sia quello corretto (updateScoreUI o updateUI)
+    if (typeof updateScoreUI === "function") {
+        updateScoreUI();
+    } else {
+        updateUI();
+    }
+    
+    clearLines();
+    document.getElementById('spinBtn').disabled = true;
+    document.getElementById('message').innerText = "";
+    
+    // Gestione stats se l'elemento esiste
+    const stats = document.getElementById('stats');
+    if (stats) stats.innerText = "";
+    
+    gridCells.forEach(c => { 
+        c.classList.remove('winner'); 
+        c.classList.add('spinning'); 
+    });
+
+    let completed = 0;
+    gridCells.forEach((cell, i) => {
+        const duration = 600 + (i * 100);
+        const startTime = performance.now();
+        function anim(now) {
+            if (now - startTime < duration) {
+                cell.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                requestAnimationFrame(anim);
+            } else {
+                cell.classList.remove('spinning');
+                completed++;
+                if (completed === gridCells.length) calculateResult();
+            }
+        }
+        requestAnimationFrame(anim);
+    });
+}
+    
+
+    function calculateResult() {
+        let totalWin = 0, lines = [];
+        let trisCount = 0;
+        const data = currentMode === '1x3' ? baseSymbolData : gridSymbolData;
+        const mainFrame = document.getElementById('mainFrame');
+
+        if (currentMode === '1x3') {
+            lines.push(gridCells);
+        } else {
+            lines.push([gridCells[0], gridCells[1], gridCells[2]]);
+            lines.push([gridCells[3], gridCells[4], gridCells[5]]);
+            lines.push([gridCells[6], gridCells[7], gridCells[8]]);
+            lines.push([gridCells[0], gridCells[3], gridCells[6]]);
+            lines.push([gridCells[1], gridCells[4], gridCells[7]]);
+            lines.push([gridCells[2], gridCells[5], gridCells[8]]);
+            lines.push([gridCells[0], gridCells[4], gridCells[8]]);
+            lines.push([gridCells[2], gridCells[4], gridCells[6]]);
+        }
+
+        lines.forEach(line => {
+            const vals = line.map(c => c.innerText);
+            if (vals[0] === vals[1] && vals[1] === vals[2]) {
+                totalWin += (data[vals[0]] * currentMultiplier);
+                line.forEach(c => c.classList.add('winner'));
+                if(currentMode === '3x3') drawWinLine(line);
+                trisCount++;
+            } else if (currentMode === '1x3') {
+                if (vals[0] === vals[1] || vals[1] === vals[2] || vals[0] === vals[2]) {
+                    totalWin += (20 * currentMultiplier);
+                    line.forEach(c => {
+                        const count = vals.filter(v => v === c.innerText).length;
+                        if(count >= 2) c.classList.add('winner');
+                    });
+                }
+            }
+        });
+
+        score += totalWin;
+        updateUI();
+        addHistory(totalWin);
+        
+        const msg = document.getElementById('message');
+        const stats = document.getElementById('stats');
+
+        if (totalWin > 0) {
+            mainFrame.classList.add('shake-anim');
+            setTimeout(() => mainFrame.classList.remove('shake-anim'), 300);
+
+            // --- ATTIVAZIONE PIOGGIA ---
+            if (totalWin >= 500) createMoneyRain();
+
+            msg.innerText = `VINTI: +$${totalWin.toLocaleString('it-IT')}!`;
+            msg.style.color = trisCount >= 2 ? "#ff00ff" : "var(--accent)";
+            
+            let ratio = currentMode === '3x3' ? (trisCount >= 2 ? "1 su 750" : "1 su 27") : (trisCount === 1 ? "1 su 216" : "1 su 7");
+            let perc = currentMode === '3x3' ? (trisCount >= 2 ? "0.13%" : "3.7%") : (trisCount === 1 ? "0.46%" : "14.3%");
+            stats.innerHTML = `<span>${ratio}</span><br><span style="font-size:0.7rem; opacity:0.6">Probabilità: ${perc}</span>`;
+        } else {
+            msg.innerText = "RIPROVA";
+            msg.style.color = "#444";
+            stats.innerHTML = `<span style="opacity:0.4">${currentMode === '1x3' ? "85.7% di prob. vuoto" : "96.3% di prob. vuoto"}</span>`;
+        }
+        document.getElementById('spinBtn').disabled = false;
+    }
+
+    window.onload = () => { createCells(3); updateUI(); updateSpinButtonText(); };
+    window.onresize = resizeCanvas;
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'Space') {
+            e.preventDefault(); 
+            const btn = document.getElementById('spinBtn');
+            if(!btn.disabled) spin();
+        }
+    });
+</script>
+</body>
+</html>

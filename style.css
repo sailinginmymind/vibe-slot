@@ -1,0 +1,184 @@
+:root {
+    --accent: #00ffcc;
+    --bg-gradient: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+    --panel: rgba(255, 255, 255, 0.03);
+    --win-glow: rgba(0, 255, 204, 0.5);
+    --fucsia: #ff00ff;
+}
+
+body { 
+    margin: 0; 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center; 
+    background: var(--bg-gradient); 
+    color: white; 
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+.game-title { 
+    font-size: 3.5rem; 
+    font-weight: 900; 
+    letter-spacing: 8px; 
+    background: linear-gradient(to bottom, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px var(--win-glow));
+    margin-bottom: 10px; 
+    text-transform: uppercase;
+}
+
+.page { 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    width: 100%; 
+    padding: 20px; 
+    box-sizing: border-box; 
+}
+
+.page.active { display: flex; }
+
+/* --- SELETTORE MODALITÀ --- */
+.mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.mode-btn {
+    background: rgba(255,255,255,0.1); 
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white; padding: 10px 20px; border-radius: 12px; 
+    cursor: pointer; font-weight: bold; transition: 0.3s;
+}
+.mode-btn.active { 
+    background: var(--accent); 
+    color: black; 
+    border-color: var(--accent); 
+    box-shadow: 0 0 15px var(--win-glow); 
+}
+
+/* --- WALLET & CREDITO --- */
+.wallet-container {
+    display: flex; flex-direction: column; align-items: center;
+    background: rgba(0,0,0,0.8); padding: 10px 40px;
+    border-radius: 20px; border: 1px solid var(--accent); margin-bottom: 20px;
+}
+#currentScore { font-size: 2.5rem; font-weight: 900; color: var(--accent); }
+
+/* --- FRAME PRINCIPALE E ANIMAZIONE SCOSSA --- */
+.main-frame {
+    background: var(--panel); 
+    backdrop-filter: blur(20px);
+    padding: 30px; 
+    border-radius: 35px; 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    min-width: 320px;
+    transition: transform 0.1s;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px); }
+    20% { transform: translate(-3px, 0px); }
+    40% { transform: translate(3px, 2px); }
+    60% { transform: translate(-1px, -1px); }
+    80% { transform: translate(-3px, 1px); }
+    100% { transform: translate(0, 0); }
+}
+.shake-anim { animation: shake 0.3s ease-in-out; }
+
+/* --- GRIGLIA SLOT --- */
+.grid-wrapper { position: relative; display: inline-block; }
+#winCanvas {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none; z-index: 10;
+}
+
+.slot-grid { display: grid; gap: 6px; margin-bottom: 20px; position: relative; }
+.grid-1x3 { grid-template-columns: repeat(3, 1fr); }
+.grid-3x3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+
+.reel {
+    width: 75px; height: 80px; background: #000; border: 2px solid #222;
+    border-radius: 10px; display: flex; justify-content: center; align-items: center;
+    font-size: 2.6rem; transition: transform 0.2s;
+}
+
+/* --- PULSANTI E CONTROLLI --- */
+#spinBtn {
+    padding: 20px; width: 100%; max-width: 280px; font-size: 1.2rem; cursor: pointer;
+    background: white; border: none; border-radius: 50px;
+    color: #000; font-weight: 900; text-transform: uppercase;
+}
+#spinBtn:disabled { opacity: 0.3; }
+
+.bet-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
+    color: #888; padding: 8px 15px; border-radius: 8px; cursor: pointer;
+    font-weight: bold; transition: 0.2s; min-width: 50px;
+}
+.bet-btn.active { 
+    background: transparent; border-color: var(--accent); 
+    color: var(--accent); box-shadow: inset 0 0 10px var(--win-glow);
+}
+
+/* --- STATO E MESSAGGI --- */
+.status-area {
+    height: 75px; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; margin-top: 15px; width: 100%;
+}
+#message { font-weight: bold; height: 24px; color: var(--accent); margin: 0; text-transform: uppercase; }
+#stats { 
+    font-size: 0.8rem; color: #888; font-family: monospace; 
+    height: 35px; margin-top: 5px; text-align: center;
+}
+
+/* --- CRONOLOGIA VINCITE --- */
+.history-container {
+    margin-top: 15px; width: 100%; max-width: 280px;
+    background: rgba(255,255,255,0.02); border-radius: 15px; padding: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.history-title { font-size: 0.65rem; color: #555; text-transform: uppercase; margin-bottom: 5px; text-align: center; }
+.history-item { 
+    font-size: 0.75rem; display: flex; justify-content: space-between; 
+    padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #666;
+}
+.history-item.win { color: var(--accent); font-weight: bold; }
+
+/* --- FOOTER E INFO --- */
+.info-link { margin-top: 20px; color: var(--accent); cursor: pointer; font-weight: 700; text-decoration: underline; }
+
+.responsible-footer {
+    margin-top: auto; padding: 20px; font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4); text-align: center;
+    letter-spacing: 1px; text-transform: uppercase;
+    border-top: 1px solid rgba(255, 255, 255, 0.05); width: 100%;
+}
+.responsible-footer strong { color: var(--accent); }
+
+/* --- STATI ANIMAZIONE --- */
+.spinning { filter: blur(4px); opacity: 0.7; transform: scale(0.92); }
+.winner { border-color: var(--accent) !important; box-shadow: 0 0 20px var(--win-glow); transform: scale(1.05); }
+
+@media (max-width: 480px) {
+    .game-title { font-size: 2.2rem; }
+    .reel { width: 65px; height: 70px; font-size: 2.2rem; }
+}
+/* Animazione Pioggia di Soldi */
+.money-rain {
+    position: fixed;
+    top: -50px;
+    font-size: 2rem;
+    z-index: 9999;
+    pointer-events: none;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(110vh) rotate(360deg);
+    }
+}
