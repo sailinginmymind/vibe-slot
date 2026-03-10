@@ -6,18 +6,36 @@
     --fucsia: #ff00ff;
 }
 
-body { 
+/* FIX SCHERMATA BIANCA E BLOCCO SCROLL */
+html, body { 
     margin: 0; 
-    min-height: 100vh; 
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000; /* Fondo nero fisso */
+    overscroll-behavior: none; /* Impedisce il trascinamento bianco su iPhone/Android */
+    overflow: hidden; 
     display: flex; 
     flex-direction: column;
     justify-content: center; 
     align-items: center; 
-    background: var(--bg-gradient); 
     color: white; 
     font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
 }
+
+.page { 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    width: 100%; 
+    height: 100vh;
+    padding: 20px; 
+    box-sizing: border-box; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch;
+}
+
+.page.active { display: flex; }
 
 .game-title { 
     font-size: 3.5rem; 
@@ -30,17 +48,6 @@ body {
     margin-bottom: 10px; 
     text-transform: uppercase;
 }
-
-.page { 
-    display: none; 
-    flex-direction: column; 
-    align-items: center; 
-    width: 100%; 
-    padding: 20px; 
-    box-sizing: border-box; 
-}
-
-.page.active { display: flex; }
 
 /* --- SELETTORE MODALITÀ --- */
 .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -65,7 +72,7 @@ body {
 }
 #currentScore { font-size: 2.5rem; font-weight: 900; color: var(--accent); }
 
-/* --- FRAME PRINCIPALE E ANIMAZIONE SCOSSA --- */
+/* --- FRAME PRINCIPALE --- */
 .main-frame {
     background: var(--panel); 
     backdrop-filter: blur(20px);
@@ -95,7 +102,6 @@ body {
     position: absolute; top: 0; left: 0;
     pointer-events: none; z-index: 10;
 }
-
 .slot-grid { display: grid; gap: 6px; margin-bottom: 20px; position: relative; }
 .grid-1x3 { grid-template-columns: repeat(3, 1fr); }
 .grid-3x3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
@@ -111,17 +117,37 @@ body {
     padding: 20px; width: 100%; max-width: 280px; font-size: 1.2rem; cursor: pointer;
     background: white; border: none; border-radius: 50px;
     color: #000; font-weight: 900; text-transform: uppercase;
+    transition: 0.2s;
 }
+#spinBtn:active { transform: scale(0.95); }
 #spinBtn:disabled { opacity: 0.3; }
 
+/* PULSANTI MOLTIPLICATORI INGRANDITI */
+#betControls {
+    margin-top: 20px; 
+    display: flex; 
+    gap: 12px; 
+    justify-content: center; 
+    width: 100%;
+}
 .bet-btn {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);
-    color: #888; padding: 8px 15px; border-radius: 8px; cursor: pointer;
-    font-weight: bold; transition: 0.2s; min-width: 50px;
+    background: rgba(255,255,255,0.05); 
+    border: 2px solid rgba(255,255,255,0.1);
+    color: #fff; 
+    padding: 12px 0; 
+    width: 65px; 
+    border-radius: 15px; 
+    cursor: pointer; 
+    font-weight: 800; 
+    font-size: 1.1rem; 
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .bet-btn.active { 
-    background: transparent; border-color: var(--accent); 
-    color: var(--accent); box-shadow: inset 0 0 10px var(--win-glow);
+    background: var(--accent); 
+    border-color: var(--accent); 
+    color: black; 
+    box-shadow: 0 0 15px var(--win-glow);
+    transform: scale(1.15); 
 }
 
 /* --- STATO E MESSAGGI --- */
@@ -148,17 +174,32 @@ body {
 }
 .history-item.win { color: var(--accent); font-weight: bold; }
 
-/* --- FOOTER E INFO --- */
+/* --- FOOTER RESPONSABILE --- */
 .info-link { margin-top: 20px; color: var(--accent); cursor: pointer; font-weight: 700; text-decoration: underline; }
 
+/* --- FOOTER RESPONSABILE SOTTILE --- */
 .responsible-footer {
-    margin-top: auto; padding: 20px; font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4); text-align: center;
-    letter-spacing: 1px; text-transform: uppercase;
-    border-top: 1px solid rgba(255, 255, 255, 0.05); width: 100%;
+    margin-top: 15px; 
+    margin-bottom: 10px;
+    padding: 10px; 
+    font-size: 0.6rem; /* Font molto più piccolo */
+    color: rgba(255, 255, 255, 0.25); /* Più trasparente per distrarre meno */
+    text-align: center;
+    letter-spacing: 0.5px; 
+    text-transform: uppercase;
+    width: 100%;
+    max-width: 400px;
+    line-height: 1.2;
 }
-.responsible-footer strong { color: var(--accent); }
 
+.responsible-footer p {
+    margin: 2px 0; /* Riduce lo spazio tra le righe di testo */
+}
+
+.responsible-footer strong { 
+    color: rgba(0, 255, 204, 0.5); /* Accent meno acceso per non "sparare" negli occhi */
+    font-weight: 600;
+}
 /* --- STATI ANIMAZIONE --- */
 .spinning { filter: blur(4px); opacity: 0.7; transform: scale(0.92); }
 .winner { border-color: var(--accent) !important; box-shadow: 0 0 20px var(--win-glow); transform: scale(1.05); }
@@ -167,6 +208,7 @@ body {
     .game-title { font-size: 2.2rem; }
     .reel { width: 65px; height: 70px; font-size: 2.2rem; }
 }
+
 /* Animazione Pioggia di Soldi */
 .money-rain {
     position: fixed;
@@ -178,7 +220,5 @@ body {
 }
 
 @keyframes fall {
-    to {
-        transform: translateY(110vh) rotate(360deg);
-    }
+    to { transform: translateY(110vh) rotate(360deg); }
 }
